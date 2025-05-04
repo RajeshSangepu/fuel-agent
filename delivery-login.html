@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FuelSwift - Delivery Agent</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f5f5f7;
+      color: #333;
+      display: flex;
+      min-height: 100vh;
+    }
+    .sidebar {
+      width: 250px;
+      background-color: #ff7e1d;
+      padding: 2rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      color: white;
+    }
+    .sidebar h2 {
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+    .sidebar button {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1rem;
+      text-align: left;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .sidebar button:hover, .sidebar button.active {
+      background-color: rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+    }
+    main {
+      flex-grow: 1;
+      padding: 2rem;
+      overflow-y: auto;
+    }
+    .content-section {
+      display: none;
+    }
+    .content-section.active {
+      display: block;
+    }
+    .card {
+      background: white;
+      border-radius: 1rem;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .order-actions button {
+      margin-right: 0.5rem;
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 0.5rem;
+      cursor: pointer;
+    }
+    .accept { background-color: #00c853; color: white; }
+    .reject { background-color: #d50000; color: white; }
+    .map {
+      width: 100%;
+      height: 200px;
+      border-radius: 0.75rem;
+      background-color: #ccc;
+    }
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <h2>FuelSwift</h2>
+    <button onclick="showSection('dashboard')" class="active">Dashboard</button>
+    <button onclick="showSection('orders')">New Orders</button>
+    <button onclick="showSection('ongoing')">Ongoing Delivery</button>
+    <button onclick="showSection('history')">Delivery History</button>
+    <button onclick="showSection('earnings')">Earnings</button>
+    <button onclick="showSection('emergency')">Emergency</button>
+    <button onclick="showSection('profile')">Profile</button>
+    <button onclick="logout()">Logout</button>
+  </aside>
+  
+  <main>
+    <section id="dashboard" class="content-section active">
+      <div class="card">
+        <h3>Welcome Back, <span id="agent-name">Agent</span>!</h3>
+        <p>Use the sidebar to manage your deliveries.</p>
+      </div>
+    </section>
+
+    <section id="orders" class="content-section">
+      <div id="order-list"></div>
+    </section>
+
+    <section id="ongoing" class="content-section">
+      <div class="card">
+        <h3>Ongoing Delivery</h3>
+        <p>Status: En Route</p>
+        <p>Fuel: Petrol</p>
+        <p>Liters: 20</p>
+        <p>Location: XYZ Address</p>
+        <div class="map"></div>
+        <button onclick="alert('Marked as Reached')">Reached Location</button>
+        <button onclick="alert('OTP Verified')">Verify OTP</button>
+        <button onclick="alert('Delivery Completed')">Mark Delivered</button>
+      </div>
+    </section>
+
+    <section id="history" class="content-section">
+      <div class="card">
+        <h3>Delivery History</h3>
+        <p>No past deliveries yet.</p>
+      </div>
+    </section>
+
+    <section id="earnings" class="content-section">
+      <div class="card">
+        <h3>Total Deliveries</h3>
+        <p id="total-deliveries">0</p>
+      </div>
+      <div class="card">
+        <h3>Total Earnings</h3>
+        <p id="total-earnings">₹0</p>
+      </div>
+    </section>
+
+    <section id="emergency" class="content-section">
+      <div class="card">
+        <h3>Emergency Help</h3>
+        <p><strong>Call:</strong> +91 99999 99999</p>
+        <p><strong>Report:</strong> <input type="text" placeholder="Describe issue" /></p>
+        <button onclick="alert('Reported')">Submit Report</button>
+      </div>
+    </section>
+
+    <section id="profile" class="content-section">
+      <div class="card">
+        <h3>Profile</h3>
+        <p>Name: <span id="agent-name2">Agent</span></p>
+        <p>Vehicle No: KA01AB1234</p>
+        <p>Status: <span id="agent-status">Online</span></p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    function showSection(id) {
+      document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.sidebar button').forEach(b => b.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      event.target.classList.add('active');
+    }
+
+    const userData = JSON.parse(localStorage.getItem("fuelSwiftUsers") || "{}");
+    const currentUser = localStorage.getItem("currentUser");
+    const currentUserData = userData[currentUser];
+
+    if (!currentUserData) {
+      window.location.href = "login.html";
+    }
+
+    document.getElementById("agent-name").textContent = currentUser;
+    document.getElementById("agent-name2").textContent = currentUser;
+
+    const orderListEl = document.getElementById("order-list");
+    const orders = currentUserData?.orders || [];
+    let totalEarnings = 0;
+
+    orders.forEach(order => {
+      const paidStatus = order.paymentPaid ? 'Paid' : 'Unpaid';
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+        <h3>${order.id}</h3>
+        <p>Fuel: ${order.fuelType}</p>
+        <p>Liters: ${order.quantity}</p>
+        <p>Location: ${order.location}</p>
+        <p>Amount: ${order.amount}</p>
+        <p>ETA: ${order.eta}</p>
+        <p>Payment: ${paidStatus} (${order.paymentMode || 'N/A'})</p>
+        <div class="map"></div>
+        <div class="order-actions">
+          <button class="accept" onclick="alert('Accepted!')">Accept</button>
+          <button class="reject" onclick="alert('Rejected!')">Reject</button>
+        </div>
+      `;
+      orderListEl.appendChild(card);
+
+      if (order.paymentPaid) {
+        totalEarnings += parseFloat(order.amount.replace(/[^0-9.]/g, ''));
+      }
+    });
+
+    document.getElementById("total-deliveries").textContent = orders.length;
+    document.getElementById("total-earnings").textContent = `₹${totalEarnings.toFixed(2)}`;
+
+    function logout() {
+      localStorage.removeItem("isLoggedIn");
+      localStorage.removeItem("currentUser");
+      window.location.href = "login.html";
+    }
+  </script>
+</body>
+</html>

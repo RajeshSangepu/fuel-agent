@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FuelSwift - Delivery Partner Registration</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 2rem;
+      background: #f4f6f8;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      color: #ff7e1d;
+    }
+    form {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      padding: 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    label {
+      display: block;
+      margin-top: 1rem;
+      font-weight: 600;
+    }
+    input[type="text"],
+    input[type="date"],
+    input[type="file"],
+    input[type="password"] {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.3rem;
+      border: 1px solid #ccc;
+      border-radius: 0.5rem;
+    }
+    button {
+      margin-top: 2rem;
+      padding: 0.75rem;
+      background: #ff7e1d;
+      border: none;
+      color: white;
+      font-weight: bold;
+      width: 100%;
+      border-radius: 0.5rem;
+      cursor: pointer;
+    }
+    video, canvas, img.preview {
+      display: block;
+      margin-top: 1rem;
+      max-width: 100%;
+      border-radius: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Partner Registration</h1>
+  <form id="registrationForm">
+    <label>First Name</label>
+    <input type="text" id="firstName" required />
+
+    <label>Last Name</label>
+    <input type="text" id="lastName" required />
+
+    <label>Username</label>
+    <input type="text" id="username" required />
+
+    <label>Date of Birth</label>
+    <input type="date" id="dob" required />
+
+    <label>Driving License Number</label>
+    <input type="text" id="dlNo" required />
+
+    <label>DL Front Photo</label>
+    <input type="file" id="dlFront" accept="image/*" required />
+
+    <label>DL Back Photo</label>
+    <input type="file" id="dlBack" accept="image/*" required />
+
+    <label>Aadhaar Number</label>
+    <input type="text" id="aadhaarNo" required />
+
+    <label>Aadhaar Front Photo</label>
+    <input type="file" id="aadhaarFront" accept="image/*" required />
+
+    <label>Aadhaar Back Photo</label>
+    <input type="file" id="aadhaarBack" accept="image/*" required />
+
+    <label>PAN Number</label>
+    <input type="text" id="panNo" required />
+
+    <label>PAN Front Photo</label>
+    <input type="file" id="panFront" accept="image/*" required />
+
+    <label>PAN Back Photo</label>
+    <input type="file" id="panBack" accept="image/*" required />
+
+    <label>Password</label>
+    <input type="password" id="password" required />
+
+    <label>Confirm Password</label>
+    <input type="password" id="confirmPassword" required />
+
+    <label>Live Photo (Profile Picture)</label>
+    <video id="video" width="100%" autoplay></video>
+    <button type="button" onclick="capturePhoto()">Capture</button>
+    <canvas id="canvas" style="display: none;"></canvas>
+    <img id="photoPreview" class="preview" alt="Preview" />
+
+    <button type="submit">Register</button>
+  </form>
+
+  <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const photoPreview = document.getElementById('photoPreview');
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => video.srcObject = stream)
+      .catch(err => console.error('Camera not available:', err));
+
+    function capturePhoto() {
+      const context = canvas.getContext('2d');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL('image/png');
+      photoPreview.src = dataUrl;
+    }
+
+    document.getElementById('registrationForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const firstName = document.getElementById('firstName').value;
+      const lastName = document.getElementById('lastName').value;
+      const username = document.getElementById('username').value;
+      const dob = document.getElementById('dob').value;
+      const dlNo = document.getElementById('dlNo').value;
+      const aadhaarNo = document.getElementById('aadhaarNo').value;
+      const panNo = document.getElementById('panNo').value;
+      const password = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+
+      if (password !== confirmPassword) {
+        alert('Passwords do not match');
+        return;
+      }
+
+      // Capture the front and back photos of documents
+      const dlFront = document.getElementById('dlFront').files[0];
+      const dlBack = document.getElementById('dlBack').files[0];
+      const aadhaarFront = document.getElementById('aadhaarFront').files[0];
+      const aadhaarBack = document.getElementById('aadhaarBack').files[0];
+      const panFront = document.getElementById('panFront').files[0];
+      const panBack = document.getElementById('panBack').files[0];
+
+      // Save the data to localStorage (temporary storage)
+      const userData = {
+        firstName,
+        lastName,
+        username,
+        dob,
+        dlNo,
+        aadhaarNo,
+        panNo,
+        password,
+        documents: {
+          dlFront: URL.createObjectURL(dlFront),
+          dlBack: URL.createObjectURL(dlBack),
+          aadhaarFront: URL.createObjectURL(aadhaarFront),
+          aadhaarBack: URL.createObjectURL(aadhaarBack),
+          panFront: URL.createObjectURL(panFront),
+          panBack: URL.createObjectURL(panBack),
+        },
+        profilePicture: photoPreview.src
+      };
+
+      let storedUsers = JSON.parse(localStorage.getItem("fuelSwiftUsers") || "{}");
+      storedUsers[username] = userData;
+      localStorage.setItem("fuelSwiftUsers", JSON.stringify(storedUsers));
+
+      alert('Registered Successfully!');
+      window.location.href = 'login.html'; // Redirect to login page after registration
+    });
+  </script>
+</body>
+</html>

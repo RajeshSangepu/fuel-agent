@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FuelSwift - Delivery Agent</title>
+  <style>
+    /* Keep your previous styles */
+    .notification-icon {
+      position: relative;
+      cursor: pointer;
+    }
+    .notification-badge {
+      position: absolute;
+      top: 0;
+      right: 0;
+      background: red;
+      color: white;
+      border-radius: 50%;
+      padding: 0.5rem;
+    }
+    .card {
+      margin-bottom: 1rem;
+      padding: 1rem;
+      border-radius: 10px;
+      background-color: white;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    .map {
+      width: 100%;
+      height: 200px;
+      background-color: #ccc;
+    }
+    .active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>FuelSwift - Delivery Partner Dashboard</h1>
+    <div class="notification-icon">
+      <span class="notification-badge">3</span>
+      <img src="bell-icon.png" alt="Notifications" />
+    </div>
+  </header>
+
+  <nav>
+    <button onclick="showSection('orders')">Orders</button>
+    <button onclick="showSection('earnings')">Earnings</button>
+    <button onclick="showSection('profile')">Profile</button>
+    <button onclick="showSection('emergency')">Emergency Help</button>
+  </nav>
+
+  <main>
+    <!-- Orders Section -->
+    <section id="orders" class="content-section active">
+      <h2>New Orders</h2>
+      <div id="order-list"></div>
+    </section>
+
+    <!-- Earnings Section -->
+    <section id="earnings" class="content-section">
+      <div class="card">
+        <h3>Total Earnings</h3>
+        <p id="total-earnings">₹0</p>
+      </div>
+      <div class="card">
+        <h3>Performance Metrics</h3>
+        <p>Deliveries Completed: <span id="completed-orders">0</span></p>
+        <p>Average Delivery Time: <span id="avg-time">25 mins</span></p>
+      </div>
+    </section>
+
+    <!-- Profile Section -->
+    <section id="profile" class="content-section">
+      <div class="card">
+        <h3>Your Profile</h3>
+        <p>Name: <span id="agent-name">N/A</span></p>
+        <p>Status: <span id="agent-status">Offline</span></p>
+        <p>Rating: <span id="agent-rating">4.5</span></p>
+        <button onclick="logout()">Logout</button>
+      </div>
+    </section>
+
+    <!-- Emergency Help Section -->
+    <section id="emergency" class="content-section">
+      <h3>Emergency Help</h3>
+      <button onclick="callEmergency()">Call Emergency</button>
+    </section>
+  </main>
+
+  <script>
+    function showSection(id) {
+      document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+
+    function callEmergency() {
+      alert('Calling emergency support...');
+    }
+
+    function logout() {
+      localStorage.removeItem("isLoggedIn");
+      localStorage.removeItem("currentUser");
+      window.location.href = "login.html";
+    }
+
+    const userData = JSON.parse(localStorage.getItem("fuelSwiftUsers") || "{}");
+    const currentUser = localStorage.getItem("currentUser");
+    const currentUserData = userData[currentUser];
+
+    if (!currentUserData) {
+      window.location.href = "login.html";
+    }
+
+    // Show Orders
+    const orderListEl = document.getElementById("order-list");
+    const orders = currentUserData.orders || [];
+    let totalEarnings = 0;
+    let completedOrders = 0;
+
+    orders.forEach(order => {
+      const paidStatus = order.paymentPaid ? 'Paid' : 'Unpaid';
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+        <h3>Order ID: ${order.id}</h3>
+        <p>Fuel: ${order.fuelType}</p>
+        <p>Quantity: ${order.quantity} liters</p>
+        <p>Location: ${order.location}</p>
+        <p>Amount: ₹${order.amount}</p>
+        <p>Payment: ${paidStatus}</p>
+        <div class="map"></div>
+        <div class="order-actions">
+          <button class="accept" onclick="acceptOrder(${order.id})">Accept</button>
+          <button class="reject" onclick="rejectOrder(${order.id})">Reject</button>
+        </div>
+      `;
+      orderListEl.appendChild(card);
+
+      // Calculate earnings
+      if (order.paymentPaid) {
+        totalEarnings += parseFloat(order.amount.replace(/[^0-9.-]+/g, ""));
+      }
+
+      completedOrders++;
+    });
+
+    // Update earnings and performance metrics
+    document.getElementById("total-earnings").textContent = `₹${totalEarnings.toFixed(2)}`;
+    document.getElementById("completed-orders").textContent = completedOrders;
+
+    function acceptOrder(orderId) {
+      alert('Order Accepted!');
+      // Implement your logic to accept the order
+    }
+
+    function rejectOrder(orderId) {
+      alert('Order Rejected!');
+      // Implement your logic to reject the order
+    }
+  </script>
+</body>
+</html>
